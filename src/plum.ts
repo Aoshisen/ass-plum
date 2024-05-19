@@ -14,15 +14,17 @@ export class Plum {
   private frameQueue: (() => void)[] = [];
   private depth: number = 0;
 
-  constructor(private el: HTMLCanvasElement) {
+  constructor(el: HTMLCanvasElement) {
     this.ctx = el.getContext("2d")!;
     this.init();
   }
 
   private init(): void {
+    this.ctx.strokeStyle = "grey";
     const branch: Branch = {
-      start: { x: this.el.width / 2, y: this.el.height },
-      length: 20,
+      // start: { x: this.el.width / 2, y: this.el.height },
+      start: { x: 0, y: 0 },
+      length: this.getRandomLength(),
       theta: -Math.PI / 2,
     };
     this.step(branch);
