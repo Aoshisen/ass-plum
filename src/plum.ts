@@ -2,79 +2,87 @@ interface Point {
   x: number;
   y: number;
 }
+
 interface Branch {
   start: Point;
   length: number;
   theta: number;
 }
-const WITH = 800;
-const HEIGHT = 800;
+
 export class Plum {
-  ctx: CanvasRenderingContext2D;
-  frameQueue: Function[];
-  depth: number;
-  constructor(el: HTMLCanvasElement) {
+  private ctx: CanvasRenderingContext2D;
+  private frameQueue: (() => void)[] = [];
+  private depth: number = 0;
+
+  constructor(private el: HTMLCanvasElement) {
     this.ctx = el.getContext("2d")!;
-    this.depth = 0;
-    this.frameQueue = [];
     this.init();
   }
-  init() {
+
+  private init(): void {
     const branch: Branch = {
-      start: { x: WITH / 2, y: HEIGHT },
+      start: { x: this.el.width / 2, y: this.el.height },
       length: 20,
       theta: -Math.PI / 2,
     };
     this.step(branch);
     requestAnimationFrame(() => this.startAnimation());
   }
-  startAnimation() {
-    //因为我们的frame 函数会动态的改变当前的this.frameQueue 所以这里进行一次浅拷贝;
-    const current_frames = [...this.frameQueue];
-    //执行完函数之前清空this.frameQueue 为下一次的frames 腾出空间;
+
+  private startAnimation(): void {
+    const currentFrames = [...this.frameQueue];
     this.frameQueue = [];
-    current_frames.forEach((frame) => frame());
-    if (current_frames.length && this.depth < 100) {
+    currentFrames.forEach((frame) => frame());
+    if (currentFrames.length && this.depth < 100) {
       requestAnimationFrame(() => this.startAnimation());
       this.depth++;
     }
   }
-  calcNextPoint(b: Branch) {
-    const endPoint = {
+
+  private getNextPoint(b: Branch): Point {
+    return {
       x: b.start.x + Math.cos(b.theta) * b.length,
       y: b.start.y + Math.sin(b.theta) * b.length,
     };
-    return endPoint;
   }
-  lineTo(s: Point, e: Point) {
+
+  private lineTo(s: Point, e: Point): void {
+    this.ctx.beginPath();
     this.ctx.moveTo(s.x, s.y);
     this.ctx.lineTo(e.x, e.y);
     this.ctx.stroke();
   }
-  branch(b: Branch) {
-    this.lineTo(b.start, this.calcNextPoint(b));
+
+  private branch(b: Branch): void {
+    this.lineTo(b.start, this.getNextPoint(b));
   }
-  getRandomTheta() {
-    return Math.random() * 0.8;
+
+  private getRandomTheta(): number {
+    return Math.random() * 0.85;
   }
-  getRandomLength() {
+
+  private getRandomLength(): number {
+    // 5-15
     return Math.random() * 10 + 5;
   }
-  nextLeftBranch(b: Branch) {
+
+  private nextLeftBranch(b: Branch): Branch {
     return {
       theta: b.theta - this.getRandomTheta(),
-      start: this.calcNextPoint(b),
+      start: this.getNextPoint(b),
       length: this.getRandomLength(),
     };
   }
-  nextRightBranch(b: Branch) {
+
+  private nextRightBranch(b: Branch): Branch {
     return {
       theta: b.theta + this.getRandomTheta(),
-      start: this.calcNextPoint(b),
+      start: this.getNextPoint(b),
       length: this.getRandomLength(),
     };
   }
-  step(b: Branch) {
+
+  private step(b: Branch): void {
     this.branch(b);
     if (this.depth < 4 || Math.random() < 0.5) {
       this.frameQueue.push(() => this.step(this.nextLeftBranch(b)));
