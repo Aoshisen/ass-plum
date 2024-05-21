@@ -64,14 +64,14 @@ export class Plum {
   }
   private getNextLeftBranch(b: Branch, end: Point): Branch {
     return {
-      theta: b.theta - this.getRandom(),
+      theta: b.theta - this.getRandom() * 0.2,
       start: end,
       length: this.getRandomLength(),
     };
   }
   private getNextRightBranch(b: Branch, end: Point): Branch {
     return {
-      theta: b.theta + this.getRandom(),
+      theta: b.theta + this.getRandom() * 0.2,
       start: end,
       length: this.getRandomLength(),
     };
