@@ -3,10 +3,31 @@ interface Point {
   y: number;
 }
 
-interface Branch {
-  start: Point;
+class Branch {
   length: number;
-  theta: number;
+  constructor(public start: Point, public theta: number) {
+    this.length = this.randomLength()
+  }
+  randomLength(): number {
+    return Math.random() * 10 + 5;
+  }
+  next(direction: "left" | "right"): Branch {
+    const symbol = direction === "left" ? -1 : 1;
+    return new Branch(this.end, this.theta + (symbol * Math.random() * 0.2))
+  }
+  get end(): Point {
+    return {
+      x: this.start.x + Math.cos(this.theta) * this.length,
+      y: this.start.y + Math.sin(this.theta) * this.length,
+    }
+  }
+}
+
+function draw(branch: Branch, ctx: CanvasRenderingContext2D): void {
+  ctx.beginPath();
+  ctx.moveTo(branch.start.x, branch.start.y);
+  ctx.lineTo(branch.end.x, branch.end.y);
+  ctx.stroke();
 }
 
 export class Plum {
@@ -16,72 +37,33 @@ export class Plum {
   private readonly MAX_DEPTH = 100;
   private readonly MIN_DEPTH = 5;
   constructor(private el: HTMLCanvasElement) {
-    this.ctx = el.getContext("2d")!;
+    this.ctx = this.el.getContext("2d")!;
     this.init();
   }
-
   private init(): void {
     this.ctx.strokeStyle = "grey";
-    const branch: Branch = Object.freeze({
-      start: { x: this.el.width / 2, y: this.el.height },
-      length: this.randomLength(),
-      theta: -Math.PI / 2,
-    });
-    this.step(branch);
+    const firstBranch: Branch = new Branch({ x: this.el.width / 2, y: this.el.height }, -Math.PI / 2);
+    this.step(firstBranch);
     this.startAnimation();
   }
   private startAnimation(): void {
     if (this.shouldYield()) return;
     const currentFrames = [...this.frameQueue];
-    this.frameQueue = [];
-    currentFrames.forEach((frame) => frame());
-    requestAnimationFrame(() => this.startAnimation());
+    this.frameQueue.length = 0;
+    currentFrames.forEach(f => f());
+    requestAnimationFrame(this.startAnimation.bind(this));
     this.depth++;
   }
-
-  private nextPoint(b: Branch): Point {
-    return Object.freeze({
-      x: b.start.x + Math.cos(b.theta) * b.length,
-      y: b.start.y + Math.sin(b.theta) * b.length,
-    })
-  }
-
   private shouldYield(): boolean {
-    return this.frameQueue.length === 0 || this.depth >= this.MAX_DEPTH
-  }
-
-  private line(s: Point, e: Point): Point {
-    this.ctx.beginPath();
-    this.ctx.moveTo(s.x, s.y);
-    this.ctx.lineTo(e.x, e.y);
-    this.ctx.stroke();
-    return e;
-  }
-  private branch(b: Branch): Point {
-    return this.line(b.start, this.nextPoint(b));
-  }
-  private random(): number {
-    return Math.random();
-  }
-  private randomLength(): number {
-    // 5-15
-    return Math.random() * 10 + 5;
-  }
-  private getNextBranch(b: Branch, end: Point, direction: "left" | "right"): Branch {
-    const symbol = direction === "left" ? -1 : 1;
-    return Object.freeze({
-      theta: b.theta + (symbol * this.random() * 0.2),
-      start: end,
-      length: this.randomLength(),
-    })
+    return !this.frameQueue.length || this.depth >= this.MAX_DEPTH
   }
   private checkIsRenderBranch() {
-    return this.depth < this.MIN_DEPTH || this.random() < 0.5;
+    return this.depth < this.MIN_DEPTH || Math.random() < 0.5;
   }
   private step(b: Branch): void {
     if (!this.checkIsRenderBranch()) return;
-    const endPoint = this.branch(b);
-    this.frameQueue.push(() => this.step(this.getNextBranch(b, endPoint, "left")));
-    this.frameQueue.push(() => this.step(this.getNextBranch(b, endPoint, "right")));
+    draw(b, this.ctx);
+    this.frameQueue.push(this.step.bind(this, b.next("left")));
+    this.frameQueue.push(this.step.bind(this, b.next("right")));
   }
 }
