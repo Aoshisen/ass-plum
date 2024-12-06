@@ -66,8 +66,8 @@ export class Plum {
   private step(b: Branch): void {
     if (!this.checkIsRenderBranch()) return;
     draw(b, this.ctx);
-    this.frameQueue.push(this.step.bind(this, b.next("left")));
-    this.frameQueue.push(this.step.bind(this, b.next("right")));
+    this.frameQueue.push(() => this.step(b.next("left")));
+    this.frameQueue.push(() => this.step(b.next("right")));
   }
   public destroy(): void {
     this.frameQueue = [];
