@@ -12,7 +12,7 @@ class Branch {
     this.length = this.randomLength()
   }
   randomLength(): number {
-    return Math.random() * (this.MAX_LENGTH - this.MAX_LENGTH) + this.MIN_LENGTH;
+    return Math.random() * (this.MAX_LENGTH - this.MIN_LENGTH) + this.MIN_LENGTH;
   }
   next(direction: "left" | "right"): Branch {
     const symbol = direction === "left" ? -1 : 1;
@@ -54,7 +54,7 @@ export class Plum {
     const currentFrames = [...this.frameQueue];
     this.frameQueue.length = 0;
     currentFrames.forEach(f => f());
-    requestAnimationFrame(this.startAnimation.bind(this));
+    requestAnimationFrame(() => this.startAnimation());
     this.depth++;
   }
   private shouldYield(): boolean {
@@ -68,5 +68,10 @@ export class Plum {
     draw(b, this.ctx);
     this.frameQueue.push(this.step.bind(this, b.next("left")));
     this.frameQueue.push(this.step.bind(this, b.next("right")));
+  }
+  public destroy(): void {
+    this.frameQueue = [];
+    this.depth = 0;
+    this.ctx.clearRect(0, 0, this.el.width, this.el.height);
   }
 }
