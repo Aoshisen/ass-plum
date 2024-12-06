@@ -5,15 +5,18 @@ interface Point {
 
 class Branch {
   length: number;
+  private readonly MIN_LENGTH: number = 10;
+  private readonly MAX_LENGTH: number = 15;
+  private readonly RANDOM_THETA = 0.2;
   constructor(public start: Point, public theta: number) {
     this.length = this.randomLength()
   }
   randomLength(): number {
-    return Math.random() * 10 + 5;
+    return Math.random() * (this.MAX_LENGTH - this.MAX_LENGTH) + this.MIN_LENGTH;
   }
   next(direction: "left" | "right"): Branch {
     const symbol = direction === "left" ? -1 : 1;
-    return new Branch(this.end, this.theta + (symbol * Math.random() * 0.2))
+    return new Branch(this.end, this.theta + (symbol * Math.random() * this.RANDOM_THETA))
   }
   get end(): Point {
     return {
